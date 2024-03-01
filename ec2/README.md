@@ -99,3 +99,45 @@ host i-* mi-*
   IdentityFile ~/.ssh/vma_rsa
 $ ssh admin@i-0fdc88fe37f8af01b
 ```
+
+## Using CDK to create it
+Install Python and virtual env
+```bash
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+~/miniconda3/bin/conda init bash
+~/miniconda3/bin/conda init zsh
+```
+Install nodejs and cdk
+```bash
+sudo su - 
+curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - &&\
+apt-get install -y nodejs
+root@Win11p8560p:~# node --version
+v20.11.1
+root@Win11p8560p:~# npm install -g npm@latest
+root@Win11p8560p:~# npm --version
+10.5.0
+root@Win11p8560p:~# npm install -g aws-cdk@latest
+root@Win11p8560p:~# cdk --version
+2.130.0 (build bd6e5ee)
+root@Win11p8560p:~# exit
+```
+Create a cdk stack from sample template
+```bash
+$ rm -rf cdk; mkdir cdk; cd cdk
+/cdk$ cdk init sample-app --language python
+/cdk$ python3 -m venv .venv
+/cdk$  source .venv/bin/activate
+/cdk$ cdk init sample-app --language python
+```
+Test Synthesize and Deploy
+```bash
+(.venv) /cdk$ pip install -r requirements.txt
+/cdk$ cdk synth
+/cdk$ cdk bootstrap
+/cdk$ cdk deploy
+/cdk$ cdk destroy
+```

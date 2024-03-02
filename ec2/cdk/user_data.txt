@@ -1,24 +1,61 @@
 #!/bin/bash
 
 # Basics
-sudo apt update
-sudo apt upgrade -y
-sudo apt-get -qy install --no-install-recommends curl wget zip unzip pv jqs
+apt update
+apt upgrade -y
+apt-get -qy install --no-install-recommends curl wget zip unzip pv jqs
 
 # SSM Agent #
 wget https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb
-sudo dpkg -i amazon-ssm-agent.deb
-sudo systemctl status amazon-ssm-agent
-sudo systemctl enable amazon-ssm-agent
-sudo systemctl start amazon-ssm-agent
+dpkg -i amazon-ssm-agent.deb
+systemctl status amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
 
-# AWS CLI v2 and Git #
-sudo apt install git -y
-curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-rm -rf aws awscliv2.zip
+# Python3, Flask and whisper
+apt-get install python3-pip -y
+apt-get install ffmpeg -y
+pip install -U openai-whisper
+pip install Flask
 
-# Python3
-sudo apt-get install python3-pip -y
-pip install boto3
+cd /root/
+cat <<EOF > app.py
+from flask import Flask, abort, request
+import whisper
+from tempfile import NamedTemporaryFile
+
+# Load the Whisper model:
+model = whisper.load_model('base')
+
+app = Flask(__name__)
+
+@app.route('/', methods=['POST'])
+def handler():
+    if not request.files:
+        # If the user didn't submit any files, return a 400 (Bad Request) error.
+        abort(400)
+
+    # For each file, let's store the results in a list of dictionaries.
+    results = []
+
+    # Loop over every file that the user submitted.
+    for filename, handle in request.files.items():
+        # Create a temporary file.
+        # The location of the temporary file is available in `temp.name`.
+        temp = NamedTemporaryFile()
+        # Write the user's uploaded file to the temporary file.
+        # The file will get deleted when it drops out of scope.
+        handle.save(temp)
+        # Let's get the transcript of the temporary file.
+        result = model.transcribe(temp.name)
+        # Now we can store the result object for this file.
+        results.append({
+            'filename': filename,
+            'transcript': result['text'],
+        })
+
+    # This will be automatically converted to JSON.
+    return {'results': results}
+EOF
+
+flask run --host=0.0.0.0 --port=80

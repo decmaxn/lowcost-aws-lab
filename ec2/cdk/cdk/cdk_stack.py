@@ -21,6 +21,7 @@ class CdkStack(Stack):
         )
 
         # Found the latest debian 11 arm64 AMI which could be launched as t4g.small 
+        # If using debian-12-arm64, it has external managed Python 3.11. Whisper installation fails.
         image = ec2.LookupMachineImage(
             owners = ['amazon'],
             name = 'debian-11-arm64*',

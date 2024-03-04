@@ -25,7 +25,7 @@ import whisper
 from tempfile import NamedTemporaryFile
 
 # Load the Whisper model:
-model = whisper.load_model('base')
+model = whisper.load_model('small')
 
 app = Flask(__name__)
 
@@ -58,4 +58,22 @@ def handler():
     return {'results': results}
 EOF
 
-flask run --host=0.0.0.0 --port=80
+cat <<EOF > /etc/systemd/system/whisper-flask.service
+[Unit]
+Description=Whisper Flask Host
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/
+Environment="FLASK_APP=app.py"
+ExecStart=/usr/local/bin/flask run --host=0.0.0.0 --port=80
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl start whisper-flask.service
+systemctl enable whisper-flask.service
+systemctl status whisper-flask.service

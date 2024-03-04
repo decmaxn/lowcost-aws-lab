@@ -49,7 +49,6 @@ class CdkStack(Stack):
         sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "Allow HTTP")
 
 
-        # 创建一个EC2实例, 给公共IP吧
         instance = ec2.Instance(
             self, "MyInstance",
             instance_type=ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.SMALL),
@@ -59,4 +58,13 @@ class CdkStack(Stack):
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             user_data=ec2.UserData.custom(user_data),
             role=ssm_role
+        )
+
+        # 创建Elastic IP
+        eip = ec2.CfnEIP(self, "MyEIP")
+
+        # 将Elastic IP关联到EC2实例
+        ec2.CfnEIPAssociation(self, "EIPAssoc",
+            eip=eip.ref,
+            instance_id=instance.instance_id
         )
